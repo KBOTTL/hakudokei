@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>拍時計</title>
+<meta name="description" content="メトロノームとカウントダウンタイマーが一つになった練習用アプリ">
+<meta name="theme-color" content="#0f0d16">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="拍時計">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="top">
+    <div class="brand">拍<span>時</span><em>計</em></div>
+    <div class="top-right">
+      <button class="syncbtn" id="syncBtn" hidden>ログイン</button>
+      <div class="vol">
+        <label for="vol">VOL</label>
+        <input id="vol" type="range" min="0" max="100" value="80" aria-label="音量">
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <svg viewBox="0 0 320 320" aria-hidden="true">
+      <circle class="track" cx="160" cy="160" r="143"></circle>
+      <circle id="arc" class="arc" cx="160" cy="160" r="143"></circle>
+      <g id="dots"></g>
+    </svg>
+    <div class="readout">
+      <div id="view-metro">
+        <div class="row-mid" style="justify-content:center">
+          <span class="unit" id="unitNote">♩=</span>
+          <span class="big metro" id="bpmBig">100</span>
+        </div>
+        <div class="sub-label" style="text-align:center" id="tempoName">ALLEGRETTO · 4/4</div>
+      </div>
+      <div id="view-timer" hidden>
+        <div class="big time" id="timeBig">25:00</div>
+        <div class="sub-label" style="text-align:center" id="timerState">停止中</div>
+      </div>
+      <div class="mini" id="mini"></div>
+    </div>
+  </div>
+  <div class="hint">リング上のドットをタップ → 強拍 / 弱拍 / 休符</div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab metro" id="tabM" role="tab" aria-selected="true">メトロノーム</button>
+    <button class="tab timer" id="tabT" role="tab" aria-selected="false">タイマー</button>
+  </div>
+
+  <div class="panel" id="panelM">
+    <div class="block">
+      <div class="lab">tempo</div>
+      <div class="bpm-row">
+        <button class="step" id="bpmDown" aria-label="テンポを下げる">−</button>
+        <input id="bpmRange" type="range" min="30" max="280" value="100" aria-label="BPM">
+        <button class="step" id="bpmUp" aria-label="テンポを上げる">＋</button>
+      </div>
+      <div class="bpm-row">
+        <button class="tap" id="tapBtn">TAP</button>
+        <div class="chips" style="flex:1;justify-content:flex-end">
+          <button class="chip" data-nudge="-5">−5</button>
+          <button class="chip" data-nudge="5">+5</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="lab">time signature &nbsp;/&nbsp; subdivision</div>
+      <div class="two">
+        <div class="meter">
+          <button class="step" id="beatsDown" aria-label="拍数を減らす">−</button>
+          <span class="val" id="beatsVal">4</span>
+          <button class="step" id="beatsUp" aria-label="拍数を増やす">＋</button>
+        </div>
+        <div class="chips" style="justify-content:flex-end;align-items:center">
+          <button class="chip" data-denom="2">/2</button>
+          <button class="chip" data-denom="4" aria-pressed="true">/4</button>
+          <button class="chip" data-denom="8">/8</button>
+        </div>
+      </div>
+      <div class="chips">
+        <button class="chip wide" data-sub="1" aria-pressed="true">なし</button>
+        <button class="chip wide" data-sub="2">8分</button>
+        <button class="chip wide" data-sub="3">3連</button>
+        <button class="chip wide" data-sub="4">16分</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel t" id="panelT" hidden>
+    <div class="block">
+      <div class="lab">countdown</div>
+      <div class="bpm-row" style="justify-content:center;gap:14px">
+        <button class="step" data-min="-5" aria-label="5分減らす">−5</button>
+        <button class="step" data-min="-1" aria-label="1分減らす">−1</button>
+        <span class="val" id="setVal" style="font-family:var(--num);font-size:38px;min-width:104px;text-align:center;font-variant-numeric:tabular-nums">25:00</span>
+        <button class="step" data-min="1" aria-label="1分増やす">+1</button>
+        <button class="step" data-min="5" aria-label="5分増やす">+5</button>
+      </div>
+      <div class="chips">
+        <button class="chip wide" data-preset="5">5分</button>
+        <button class="chip wide" data-preset="10">10分</button>
+        <button class="chip wide" data-preset="15">15分</button>
+        <button class="chip wide" data-preset="25" aria-pressed="true">25分</button>
+        <button class="chip wide" data-preset="45">45分</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="timer-btns">
+        <button class="pri" id="timerBtn">開始</button>
+        <button class="sec" id="timerReset">リセット</button>
+      </div>
+      <div class="toggle">
+        <span>メトロノームを連動させる（開始で鳴らし、終了で止める）</span>
+        <button class="sw" id="linkSw" aria-pressed="true" aria-label="メトロノーム連動"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="transport">
+    <button class="play" id="playBtn" aria-label="メトロノーム再生">
+      <svg id="playIcon" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"></path></svg>
+    </button>
+  </div>
+</div>
+
+<script src="./store.js"></script>
+<script src="./app.js"></script>
+<script src="./firebase-config.js"></script>
+<script src="./firebase-sync.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
