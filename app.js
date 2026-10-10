@@ -34,7 +34,7 @@
       master.gain.value = S.vol / 100;
       master.connect(ctx.destination);
     }
-    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.state !== "running") { try { ctx.resume(); } catch (e) {} }
     return ctx;
   }
   function voice(time, freq, peak, dur, type) {
@@ -386,6 +386,26 @@
     S = next;
     if (!tRunning) { tDone = false; tRemain = S.timerSet; }
     renderAll();
+  });
+
+  /* ---------- iOS: 触るたびに音を有効化し、復帰時に鳴り続けられるようにする ---------- */
+  function unlockAudio() {
+    ensureCtx();
+    try {
+      var b = ctx.createBuffer(1, 1, 22050);
+      var s = ctx.createBufferSource();
+      s.buffer = b;
+      s.connect(master);
+      s.start(0);
+    } catch (e) {}
+  }
+  ["touchend", "pointerup", "click"].forEach(function (ev) {
+    document.addEventListener(ev, unlockAudio, { passive: true });
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && ctx && ctx.state !== "running") {
+      try { ctx.resume(); } catch (e) {}
+    }
   });
 
   tRemain = S.timerSet;

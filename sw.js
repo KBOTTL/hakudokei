@@ -1,7 +1,7 @@
 /* sw.js — オフラインで動かすための Service Worker
  * ファイルを更新したら VERSION の数字を上げること（古いキャッシュが残らないように）
  */
-var VERSION = "hakudokei-v1";
+var VERSION = "hakudokei-v2";
 var SHELL = VERSION + "-shell";
 var FONTS = VERSION + "-fonts";
 
